@@ -1,60 +1,6 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <list>
-#include <vector>
+#include "ShortestRoute.h"
+
 using namespace std;
-
-//Declarations
-ifstream readTextFile();
-void createMatrix(ifstream& mazeFile);
-void displayMatrix();
-int BFS();
-string recordDirection(int direction);
-
-//Define types
-typedef pair<int,int> xy;
-
-//N > W > E > S
-int directionY[] = {-1, 0, 0, 1};
-int directionX[] = {0, -1, 1, 0};
-
-//Keys
-const char cStart = 'A';
-const char cEnd = 'B';
-const char cWall = 'x';
-const char cSpace = '.';
-
-//Structs
-struct mazeStruct {
-    int rows, columns;
-    xy posStart, posEnd;
-    vector<vector<int>> matrix;
-    string pathway;
-} maze;
-
-struct pointStruct {
-    xy pos;
-};
-
-struct queueNodeStruct {
-    pointStruct point;
-    int distance; //distance from the source
-    string pathway; //route from start to this point so far
-};
-
-
-//Check cell is in bounds
-bool isInBounds(int row, int column)
-{
-    return (row >= 0) && (row < maze.rows) && (column >= 0) && (column < maze.columns);
-}
-
-//Check cell is a space that can be moved into
-bool isValidSpace(int row, int column)
-{
-    return maze.matrix.at(row).at(column);
-}
 
 int main()
 {
@@ -63,7 +9,7 @@ int main()
     createMatrix(mazeFile);
     displayMatrix();
 
-    int distance = BFS();
+    int distance = breadthFirstSearch();
     if (distance != -1)
     {
         cout << "Shortest path is: " << maze.pathway << endl;
@@ -81,18 +27,30 @@ int main()
     return 0;
 }
 
+// Check cell is in bounds
+bool isInBounds(int row, int column) {
+    return (row >= 0) && (row < maze.rows) 
+    && (column >= 0) && (column < maze.columns);
+}
+
+// Check cell is a space that can be moved into
+bool isValidSpace(int row, int column)
+{
+    return maze.matrix.at(row).at(column);
+}
+
+// Reads a text file from a given name entered into the console
 ifstream readTextFile()
 {
     string nameOfMazeFile;
     cout << "Enter the name of the maze file you wish to open:" << endl;
     cin >> nameOfMazeFile;
 
-    //Reads a text file
     ifstream mazeFile("Mazes/" + nameOfMazeFile + ".txt");
     return mazeFile;
 }
 
-//Produces a MxN matrix from the text file
+// Produces a MxN matrix from the text file
 void createMatrix(ifstream& mazeFile)
 {
     int rows = 0;
@@ -101,29 +59,29 @@ void createMatrix(ifstream& mazeFile)
     string str;
     while (getline(mazeFile, str))
     {
-        //Maze will expand to fit widest line of characters
+        // Maze will expand to fit widest line of characters
         columns = str.length();
 
-        //Processing each character type to make a MxN matrix while displaying the original
+        // Processing each character type to make a MxN matrix while displaying the original
         vector<int> tempRow;
         for (int i = 0; i < str.length(); i++)
         {
             switch (str[i])
             {
-                case cWall:
+                case CWall:
                     tempRow.push_back(0);
                     cout << "x";
                     break;
-                case cSpace:
+                case CSpace:
                     tempRow.push_back(1);
                     cout << ".";
                     break;
-                case cStart:
+                case CStart:
                     maze.posStart = xy(i, rows);
                     tempRow.push_back(1);
                     cout << "A";
                     break;
-                case cEnd:
+                case CEnd:
                     maze.posEnd = xy(i, rows);
                     tempRow.push_back(1);
                     cout << "B";
@@ -146,7 +104,7 @@ void createMatrix(ifstream& mazeFile)
     maze.columns = columns;
 }
 
-//Output the MxN matrix to the terminal for visual representation
+// Output the MxN matrix to the terminal for visual representation
 void displayMatrix()
 {
     cout << "\nConverted into a MxN matrix:\n" << endl;
@@ -163,17 +121,17 @@ void displayMatrix()
     }
 }
 
-//Breadth-First-Search algorithm > Expected time complexity is O(MN)
-int BFS()
+// Breadth-First-Search algorithm > Expected time complexity is O(MN)
+int breadthFirstSearch()
 {
     vector<vector<bool>> visited;
     visited.resize(maze.rows);
-    for(int i=0; i < maze.rows; i++)
+    for (int i = 0; i < maze.rows; i++)
     {
         visited[i].resize(maze.columns);
     }
 
-    //Set all spaces to unvisited
+    // Set all spaces to unvisited
     for (int i = 0; i < visited.capacity(); i++)
     {
         for (int j = 0; j < visited.capacity(); j++)
@@ -182,7 +140,7 @@ int BFS()
         }
     }
 
-    //Marking start pos as visited
+    // Marking start pos as visited
     visited[maze.posStart.second][maze.posStart.first] = true;
 
     list<queueNodeStruct> q;
@@ -212,8 +170,8 @@ int BFS()
 
         for (int i = 0; i < 4; i++)
         {
-            int row = point.pos.second + directionY[i];
-            int col = point.pos.first + directionX[i];
+            int row = point.pos.second + DirectionY[i];
+            int col = point.pos.first + DirectionX[i];
 
             if (isInBounds(row, col) && isValidSpace(row, col))
             {
@@ -223,7 +181,7 @@ int BFS()
                     queueNodeStruct adjacentCell = {
                         xy(col, row),
                         current.distance + 1,
-                        //Store current route
+                        // Store current route
                         current.pathway + recordDirection(i)
                     };
                     q.push_back(adjacentCell);
@@ -232,7 +190,7 @@ int BFS()
         }
     }
 
-    //If destination cannot be reached, return -1
+    // If destination cannot be reached, return -1
     return -1;
 }
 
